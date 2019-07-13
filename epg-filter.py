@@ -9,6 +9,7 @@ from sh import gunzip
 import xml.etree.ElementTree as ET
 
 from model.model_items import M3uItem, ChannelItem, NameItem, ProgrammeItem
+from logger import getNasLogger
 
 # M3U url
 m3u_url = 'http://192.168.1.64:8000/torrent-telik'
@@ -113,12 +114,11 @@ replacement_map = [
     [['Мульт и музыка', 'МультиМузыка'], 'Страна']
 ]
 
+logger = getNasLogger('epg-filter')
+
 
 def add_custom_entries(channel_item):
     list = channel_item.display_name_list
-
-    with open('replacement_map.json', 'w') as json_file:
-        json_file.write(json.dumps(replacement_map))
 
     for item in replacement_map:
         if insert_value_if_needed(list, item[0], item[1]):
@@ -157,7 +157,7 @@ def get_value_from_list(value, list):
 
 
 def download_file(url, file_name):
-    print('download_file(' + url + ', ' + file_name)
+    logger.info('download_file(%s, %s)', url, file_name)
 
     file_name = cache_folder + '/' + file_name
     file_name_no_gz = file_name.replace('.gz', '')
@@ -179,7 +179,7 @@ def download_file(url, file_name):
 
     get_response = requests.get(url, headers=headers, stream=True)
     if get_response.status_code == 304:
-        print('download_file() ignore as file "Not Modified"')
+        logger.info('download_file() ignore as file "Not Modified"')
         return file_name_no_gz
 
     store_last_modified_data(etag_file_name, get_response.headers)
@@ -188,15 +188,15 @@ def download_file(url, file_name):
         for chunk in get_response.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
-    print('download_file done: ' + file_name + ', file size: ' + str(os.path.getsize(file_name)))
+    logger.info('download_file done: %s, , file size: %d', file_name, os.path.getsize(file_name))
     return file_name
 
 
 def store_last_modified_data(file_name, headers):
-    print('store_last_modified_data(' + file_name + ')')
+    logger.info('store_last_modified_data(%s)', file_name)
 
     data = {'etag': str(headers.get('ETag')), 'last_modified' : str(headers.get('Last-Modified'))}
-    print('store_last_modified_data(), data: ' + str(data))
+    logger.info('store_last_modified_data(), data: %s', str(data))
     with open(file_name, 'w') as json_file:
         json_file.write(json.dumps(data))
 
@@ -207,19 +207,19 @@ def load_last_modified_data(file_name):
             data = json.load(json_file)
             return data
     except:
-        print('ERROR can\'t read file: ' + file_name)
+        logger.error('ERROR can\'t read file: %s', file_name)
     return None
 
 
 def download_m3u():
-    print('download_m3u()')
+    logger.info('download_m3u()')
     file_name = download_file(m3u_url, 'm3u.m3u')
-    print('download_m3u() done')
+    logger.info('download_m3u() done')
     return file_name
 
 
 def download_epgs():
-    print('download_epgs()')
+    logger.info('download_epgs()')
     index = 1
     downloaded = []
     for url in tv_epg_urls:
@@ -235,15 +235,15 @@ def download_epgs():
                 file_name = xml_file_name
 
             downloaded.append(file_name)
-            print('download_epg done, xml size: ' + str(os.path.getsize(file_name)))
+            logger.info('download_epg done, xml size: %s', str(os.path.getsize(file_name)))
         except:
-            print('ERROR in download_epg', sys.exc_info()[0])
+            logger.error('ERROR in download_epg %s', sys.exc_info()[0])
         index = index + 1
     return downloaded
 
 
 def load_xmlt(m3u_entries, epg_file, channel_list, programme_list):
-    print('load_xmlt(' + epg_file + ')')
+    logger.info('load_xmlt(%s)', epg_file)
 
     tree = ET.parse(epg_file)
     root = tree.getroot()
@@ -266,8 +266,8 @@ def load_xmlt(m3u_entries, epg_file, channel_list, programme_list):
             program_item = ProgrammeItem(item)
             programme_list.append(program_item)
 
-    print('load_xmlt(), channel_list size: ' + str(len(channel_list)))
-    print('load_xmlt(), programme_list size: ' + str(len(programme_list)))
+    logger.info('load_xmlt(), channel_list size: %d', len(channel_list))
+    logger.info('load_xmlt(), programme_list size: %d', len(programme_list))
 
 
 def merge_values(channel_0, channel_1):
@@ -282,13 +282,13 @@ def merge_values(channel_0, channel_1):
 
 
 def parse_m3u(m3u_filename):
-    print('parse_m3u(' + m3u_filename + ')')
+    logger.info('parse_m3u(%s)', m3u_filename)
     m3u_entries = []
     m3u_file = open(m3u_filename, 'r')
     line = m3u_file.readline()
 
     if '#EXTM3U' not in line:
-        print('ERROR in parse_m3u(), file does not start with #EXTM3U, it does not appear to be an M3U file')
+        logger.error('ERROR in parse_m3u(), file does not start with #EXTM3U, it does not appear to be an M3U file')
         return m3u_entries
 
     entry = M3uItem(None)
@@ -305,7 +305,7 @@ def parse_m3u(m3u_filename):
             entry = M3uItem(None)
 
     m3u_file.close()
-    print('parse_m3u(), m3u_entries size: ' + str(len(m3u_entries)))
+    logger.info('parse_m3u(), m3u_entries size: %d', len(m3u_entries))
     return m3u_entries
 
 
@@ -364,7 +364,7 @@ def compare(string1, string2):
 
 
 def writeXml(channel_list, programme_list):
-    print('writeXml()')
+    logger.info('writeXml()')
 
     tv = ET.Element("tv")
 
@@ -381,11 +381,11 @@ def writeXml(channel_list, programme_list):
         os.remove(file_name)
 
     tree.write(file_name, encoding='utf-8', xml_declaration=True)
-    print('writeXml() done, file size: ' + str(os.path.getsize(file_name)))
+    logger.info('writeXml() done, file size: %d', os.path.getsize(file_name))
 
 
 if __name__ == '__main__':
-    print('main()')
+    logger.info('main()')
     start_time = time.time()
 
     m3u_file = download_m3u()
@@ -399,7 +399,7 @@ if __name__ == '__main__':
     for file in downloaded:
         load_xmlt(m3u_entries, file, channel_list, programme_list)
 
-    print('Not preset:')
+    logger.info('Not preset:')
     counter = 0
     for value in m3u_entries:
 
@@ -416,9 +416,9 @@ if __name__ == '__main__':
             if found:
                 break
         if not found:
-            print('  ' + str(value))
+            logger.info('  %s', str(value))
             counter = counter + 1
-    print('Not preset, counter: ' + str(counter))
+    logger.info('Not preset, counter: ' + str(counter))
 
     # print('Empty:')
     # for programme in programme_list:
@@ -435,4 +435,4 @@ if __name__ == '__main__':
     #         print(programme)
 
     writeXml(channel_list, programme_list)
-    print("main(), done: %s seconds" % (time.time() - start_time))
+    logger.info("main(), done: %s seconds", (time.time() - start_time))
