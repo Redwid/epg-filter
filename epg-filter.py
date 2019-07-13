@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import time
+import shutil
 import requests
 from sh import gunzip
 import xml.etree.ElementTree as ET
@@ -375,13 +376,16 @@ def writeXml(channel_list, programme_list):
         programme.to_et_sub_element(tv)
 
     tree = ET.ElementTree(tv)
-    file_name = cache_folder + '/epg-all.xml'
+    file_name = 'epg-all.xml'
+    file_path = cache_folder + '/epg-all.xml'
 
-    if os.path.exists(file_name):
-        os.remove(file_name)
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
     tree.write(file_name, encoding='utf-8', xml_declaration=True)
-    logger.info('writeXml(%s) done, file size: %d', file_name, os.path.getsize(file_name))
+    logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
+
+    shutil.copy(file_path, '/srv/dev-disk-by-label-media/epg/' + file_name)
 
 
 if __name__ == '__main__':
