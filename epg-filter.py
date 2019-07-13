@@ -380,7 +380,7 @@ def writeXml(channel_list, programme_list):
     if os.path.exists(file_name):
         os.remove(file_name)
 
-    tree.write(cache_folder + '/' + file_name, encoding='utf-8', xml_declaration=True)
+    tree.write(file_name, encoding='utf-8', xml_declaration=True)
     print('writeXml() done, file size: ' + str(os.path.getsize(file_name)))
 
 
