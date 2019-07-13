@@ -21,7 +21,7 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
 # Cache folder
-cache_folder = 'cache'
+cache_folder = '/tmp/epg-cache'
 
 # Replacement map for channels
 replacement_map = [
@@ -380,7 +380,7 @@ def writeXml(channel_list, programme_list):
     if os.path.exists(file_name):
         os.remove(file_name)
 
-    tree.write(file_name, encoding='utf-8', xml_declaration=True)
+    tree.write(cache_folder + '/' + file_name, encoding='utf-8', xml_declaration=True)
     print('writeXml() done, file size: ' + str(os.path.getsize(file_name)))
 
 
