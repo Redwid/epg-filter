@@ -1,4 +1,4 @@
-##Installiation
+##Installation
 
 ``
   virtualenv venv/bin/activate
