@@ -382,7 +382,7 @@ def writeXml(channel_list, programme_list):
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    tree.write(file_name, encoding='utf-8', xml_declaration=True)
+    tree.write(file_path, encoding='utf-8', xml_declaration=True)
     logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
 
     shutil.copy(file_path, '/srv/dev-disk-by-label-media/epg/' + file_name)
