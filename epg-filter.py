@@ -385,7 +385,8 @@ def writeXml(channel_list, programme_list):
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
     logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
 
-    shutil.copy(file_path, '/srv/dev-disk-by-label-media/epg/' + file_name)
+    file_path = shutil.copy(file_path, '/srv/dev-disk-by-label-media/epg/' + file_name)
+    logger.info('writeXml() copy to: %s, file size: %d', file_path, os.path.getsize(file_path))
 
 
 if __name__ == '__main__':
