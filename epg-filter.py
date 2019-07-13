@@ -381,7 +381,7 @@ def writeXml(channel_list, programme_list):
         os.remove(file_name)
 
     tree.write(file_name, encoding='utf-8', xml_declaration=True)
-    logger.info('writeXml() done, file size: %d', os.path.getsize(file_name))
+    logger.info('writeXml(%s) done, file size: %d', file_name, os.path.getsize(file_name))
 
 
 if __name__ == '__main__':
