@@ -23,8 +23,8 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
 # Path to store files
-file_path = '/srv/dev-disk-by-label-media/epg/'
-# file_path = './'
+destination_file_path = '/srv/dev-disk-by-label-media/epg/'
+# destination_file_path = './'
 
 # Cache folder
 cache_folder = '/tmp/epg-cache'
@@ -397,8 +397,8 @@ def writeXml(channel_list, programme_list):
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
     logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
 
-    file_path = shutil.copy(file_path, file_path + file_name)
-    logger.info('writeXml() copy to: %s, file size: %d', file_path, os.path.getsize(file_path))
+    file_path = shutil.copy(file_path, destination_file_path + file_name)
+    logger.info('writeXml() copy to: %s, file size: %d', destination_file_path, os.path.getsize(file_path))
 
 
 if __name__ == '__main__':
