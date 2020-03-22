@@ -31,6 +31,7 @@ cache_folder = '/tmp/epg-cache'
 # cache_folder = 'epg-cache'
 
 # Replacement map for channels
+# [list_to_check][list_to_insert]
 replacement_map = [
     [['Animal Planet'], 'Animal Planet HD'],
     [['Da Vinci', 'Да Винчи'], 'Da Vinci'],
@@ -123,7 +124,8 @@ replacement_map = [
     [['Russia Today'], 'RT Д HD'],
     [['Viasat Explore'], 'Viasat Explorer'],
     [['Eurosport 1 HD'], 'Eurosport HD'],
-    [['Армения ТВ'], 'Armenia TV']
+    [['Армения ТВ'], 'Armenia TV'],
+    [['ID Xtra Россия'], 'ID Xtra RU']
 ]
 
 logger = getNasLogger('epg-filter')
