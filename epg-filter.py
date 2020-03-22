@@ -125,7 +125,7 @@ replacement_map = [
     [['Viasat Explore'], 'Viasat Explorer'],
     [['Eurosport 1 HD'], 'Eurosport HD'],
     [['Армения ТВ'], 'Armenia TV'],
-    [['ID Xtra Россия'], 'ID Xtra RU']
+    [['ID Xtra RU'], 'ID Xtra Россия']
 ]
 
 logger = getNasLogger('epg-filter')
