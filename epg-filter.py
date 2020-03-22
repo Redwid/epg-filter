@@ -22,8 +22,13 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
                'http://epg.it999.ru/edem.xml.gz']
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
+# Path to store files
+file_path = '/srv/dev-disk-by-label-media/epg/'
+#file_path = './'
+
 # Cache folder
 cache_folder = '/tmp/epg-cache'
+#cache_folder = 'epg-cache'
 
 # Replacement map for channels
 replacement_map = [
@@ -56,7 +61,7 @@ replacement_map = [
     [['Первый HD +4'], 'Первый канал HD (+4)'],
     [['Первый канал +2'], 'Первый канал (+2)'],
     [['5 канал Россия'], '5 канал (Россия)'],
-    [['Техно 24'], '24Техно'],
+    [['Техно 24', '24 Техно'], '24Техно'],
     [['Россия 1 +2'], 'Россия 1 (+2)'],
     [['BBC', 'BBC World News'], 'BBC World News Europe'],
     [['О!'], 'Канал О!'],
@@ -112,7 +117,11 @@ replacement_map = [
     [['TV3 LT', 'TV3 Литва'], 'TV3'],
     [['LRT Televizija'], 'LRT'],
     [['ТВ3', 'ТВ-3'], 'ТВ3 Россия'],
-    [['Мульт и музыка', 'МультиМузыка'], 'Страна']
+    [['Мульт и музыка', 'МультиМузыка'], 'Страна'],
+    [['В мире животных HD'], 'Animal Family HD'],
+    [['Эврика HD'], 'Eureka HD'],
+    [['Russia Today'], 'RT Д HD'],
+    [['Viasat Explore'], 'Viasat Explore']
 ]
 
 logger = getNasLogger('epg-filter')
@@ -178,7 +187,7 @@ def download_file(url, file_name):
     if not os.path.exists(cache_folder):
         os.makedirs(cache_folder)
 
-    get_response = requests.get(url, headers=headers, stream=True)
+    get_response = requests.get(url, headers=headers, stream=True, verify=False)
     if get_response.status_code == 304:
         logger.info('download_file() ignore as file "Not Modified"')
         return file_name_no_gz
@@ -237,8 +246,9 @@ def download_epgs():
 
             downloaded.append(file_name)
             logger.info('download_epg done, xml size: %s', str(os.path.getsize(file_name)))
-        except:
-            logger.error('ERROR in download_epg %s', sys.exc_info()[0])
+        except Exception as e:
+            logger.error('ERROR in download_epg %s', e)
+            print(e)
         index = index + 1
     return downloaded
 
@@ -385,7 +395,7 @@ def writeXml(channel_list, programme_list):
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
     logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
 
-    file_path = shutil.copy(file_path, '/srv/dev-disk-by-label-media/epg/' + file_name)
+    file_path = shutil.copy(file_path, file_path + file_name)
     logger.info('writeXml() copy to: %s, file size: %d', file_path, os.path.getsize(file_path))
 
 
