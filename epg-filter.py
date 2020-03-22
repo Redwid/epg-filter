@@ -24,11 +24,11 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
 
 # Path to store files
 file_path = '/srv/dev-disk-by-label-media/epg/'
-#file_path = './'
+# file_path = './'
 
 # Cache folder
 cache_folder = '/tmp/epg-cache'
-#cache_folder = 'epg-cache'
+# cache_folder = 'epg-cache'
 
 # Replacement map for channels
 replacement_map = [
@@ -121,7 +121,8 @@ replacement_map = [
     [['В мире животных HD'], 'Animal Family HD'],
     [['Эврика HD'], 'Eureka HD'],
     [['Russia Today'], 'RT Д HD'],
-    [['Viasat Explore'], 'Viasat Explore']
+    [['Viasat Explore'], 'Viasat Explorer'],
+    [['Eurosport 1 HD'], 'Eurosport HD']
 ]
 
 logger = getNasLogger('epg-filter')
