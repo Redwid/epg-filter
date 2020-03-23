@@ -76,7 +76,7 @@ replacement_map = [
     [['VH1', 'VH1 European'], 'VH1 Europe'],
     [['Viasat Sport HD'], 'Viasat Sport HD Россия'],
     [['Матч! HD', 'Матч HD', 'МатчТВ HD'], 'Матч ТВ HD'],
-    [['Наш футбол HD'], 'НТВ+ Наш футбол HD'],
+    [['Наш футбол HD', 'Матч Премьер'], 'НТВ+ Наш футбол HD'],
     [['RT Д Русский'], 'RT Д HD'],
     [['Hustler HD'], 'Hustler HD Europe'],
     [['Шансон-TB'], 'Шансон ТВ'],
