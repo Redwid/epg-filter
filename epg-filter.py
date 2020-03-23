@@ -126,7 +126,9 @@ replacement_map = [
     [['Eurosport 1 HD'], 'Eurosport HD'],
     [['Армения ТВ'], 'Armenia TV'],
     [['ID Xtra RU'], 'ID Xtra Россия'],
-    [['М1 Украина'], 'M1']
+    [['М1 Украина'], 'M1'],
+    [['Kentron TV'], 'Kentron'],
+    [['Россия К'], 'Культура']
 ]
 
 logger = getNasLogger('epg-filter')
