@@ -128,7 +128,8 @@ replacement_map = [
     [['ID Xtra RU'], 'ID Xtra Россия'],
     [['М1 Украина'], 'M1'],
     [['Kentron TV'], 'Kentron'],
-    [['Россия К'], 'Культура']
+    [['Россия К'], 'Культура'],
+    [['Extreme sport'], 'Extreme Sports']
 ]
 
 logger = getNasLogger('epg-filter')
