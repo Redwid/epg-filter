@@ -301,31 +301,38 @@ def merge_values(channel_0, channel_1):
         display_name_list_0.icon = display_name_list_1.icon
 
 
-def parse_m3u(m3u_filename):
-    logger.info('parse_m3u(%s)', m3u_filename)
+def download_and_parse_m3u():
+    logger.info('download_and_parse_m3u()')
+
     m3u_entries = []
-    m3u_file = open(m3u_filename, 'r')
-    line = m3u_file.readline()
+    for i in range(5):
+        m3u_filename = download_file(m3u_url, 'm3u.m3u')
+        logger.info('download_and_parse_m3u() download done: #%d', i)
 
-    if '#EXTM3U' not in line:
-        logger.error('ERROR in parse_m3u(), file does not start with #EXTM3U, it does not appear to be an M3U file')
-        return m3u_entries
+        m3u_file = open(m3u_filename, 'r')
+        line = m3u_file.readline()
 
-    entry = M3uItem(None)
+        if '#EXTM3U' not in line:
+            logger.error('ERROR in download_and_parse_m3u(), file does not start with #EXTM3U, #%d', i)
+            continue
 
-    for line in m3u_file:
-        line = line.strip()
-        if line.startswith('#EXTINF:'):
-            m3u_fields = line.split('#EXTINF:-1 ')[1]
-            entry = M3uItem(m3u_fields)
-        elif len(line) != 0:
-            entry.url = line
-            if M3uItem.is_valid(entry, True):
-                m3u_entries.append(entry)
-            entry = M3uItem(None)
+        entry = M3uItem(None)
 
-    m3u_file.close()
-    logger.info('parse_m3u(), m3u_entries size: %d', len(m3u_entries))
+        for line in m3u_file:
+            line = line.strip()
+            if line.startswith('#EXTINF:'):
+                m3u_fields = line.split('#EXTINF:-1 ')[1]
+                entry = M3uItem(m3u_fields)
+            elif len(line) != 0:
+                entry.url = line
+                if M3uItem.is_valid(entry, True):
+                    m3u_entries.append(entry)
+                entry = M3uItem(None)
+
+        m3u_file.close()
+        break
+
+    logger.info('download_and_parse_m3u(), m3u_entries size: %d', len(m3u_entries))
     return m3u_entries
 
 
@@ -412,20 +419,18 @@ if __name__ == '__main__':
     logger.info('main()')
     start_time = time.time()
 
-    m3u_file = download_m3u()
-    # m3u_file = cache_folder + '/m3u.m3u'
-    m3u_entries = parse_m3u(m3u_file)
+    all_m3u_entries = download_and_parse_m3u()
     downloaded = download_epgs()
     # downloaded = [cache_folder + '/epg-1.xml', cache_folder + '/epg-2.xml', cache_folder + '/epg-3.xml', cache_folder + '/epg-4.xml']
 
     channel_list = []
     programme_list = []
     for file in downloaded:
-        load_xmlt(m3u_entries, file, channel_list, programme_list)
+        load_xmlt(all_m3u_entries, file, channel_list, programme_list)
 
     logger.info('Not preset:')
     counter = 0
-    for value in m3u_entries:
+    for value in all_m3u_entries:
 
         # if 'Paramount Сhannel HD' == value.tvg_name:
         #     print('!')
