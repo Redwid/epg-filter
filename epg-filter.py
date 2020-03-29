@@ -7,6 +7,7 @@ import json
 import time
 import shutil
 import requests
+import subprocess
 from sh import gunzip
 import xml.etree.ElementTree as ET
 from time import perf_counter
