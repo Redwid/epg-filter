@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+import datetime
 import os
 import sys
 import json
@@ -8,6 +9,7 @@ import shutil
 import requests
 from sh import gunzip
 import xml.etree.ElementTree as ET
+from time import perf_counter
 
 from model.model_items import M3uItem, ChannelItem, NameItem, ProgrammeItem
 from logger import getNasLogger
@@ -20,6 +22,7 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
                'http://www.teleguide.info/download/new3/xmltv.xml.gz',
                'http://programtv.ru/xmltv.xml.gz',
                'http://epg.it999.ru/edem.xml.gz']
+               # 'http://epg.openboxfan.com/xmltv-t-sd.xml.gz']
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
 # Path to store files
@@ -175,7 +178,7 @@ def get_value_from_list(value, list):
     return None
 
 
-def download_file(url, file_name):
+def download_file(url, file_name, result):
     logger.info('download_file(%s, %s)', url, file_name)
 
     file_name = cache_folder + '/' + file_name
@@ -199,6 +202,7 @@ def download_file(url, file_name):
     get_response = requests.get(url, headers=headers, stream=True, verify=False)
     if get_response.status_code == 304:
         logger.info('download_file() ignore as file "Not Modified"')
+        result.append('skipped')
         return file_name_no_gz
 
     store_last_modified_data(etag_file_name, get_response.headers)
@@ -207,6 +211,7 @@ def download_file(url, file_name):
         for chunk in get_response.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
+    result.append('downloaded')
     logger.info('download_file done: %s, , file size: %d', file_name, os.path.getsize(file_name))
     return file_name
 
@@ -237,14 +242,16 @@ def download_m3u():
     return file_name
 
 
-def download_epgs():
+def download_epgs(result):
     logger.info('download_epgs()')
     index = 1
     downloaded = []
     for url in tv_epg_urls:
+        file_result = []
+        file_result.append("epg #" + str(index))
         try:
             file_name = 'epg-' + str(index) + '.xml.gz'
-            file_name = download_file(url, file_name)
+            file_name = download_file(url, file_name, file_result)
 
             if file_name.endswith('.gz'):
                 xml_file_name = file_name.replace('.gz', '')
@@ -254,7 +261,8 @@ def download_epgs():
                 file_name = xml_file_name
 
             downloaded.append(file_name)
-            logger.info('download_epg done, xml size: %s', str(os.path.getsize(file_name)))
+            result.append(file_result[0] + ", " + file_result[1] + ": " + sizeof_fmt(os.path.getsize(file_name)))
+            logger.info('download_epg done, xml size: %s', sizeof_fmt(os.path.getsize(file_name)))
         except Exception as e:
             logger.error('ERROR in download_epg %s', e)
             print(e)
@@ -301,12 +309,13 @@ def merge_values(channel_0, channel_1):
         display_name_list_0.icon = display_name_list_1.icon
 
 
-def download_and_parse_m3u():
+def download_and_parse_m3u(result):
     logger.info('download_and_parse_m3u()')
 
     m3u_entries = []
     for i in range(5):
-        m3u_filename = download_file(m3u_url, 'm3u.m3u')
+        file_result = []
+        m3u_filename = download_file(m3u_url, 'm3u.m3u', file_result)
         logger.info('download_and_parse_m3u() download done: #%d', i)
 
         m3u_file = open(m3u_filename, 'r')
@@ -330,6 +339,7 @@ def download_and_parse_m3u():
                 entry = M3uItem(None)
 
         m3u_file.close()
+        result.append("The m3u downloaded in: #" + str(i) + ", channels: " + str(len(m3u_entries)))
         break
 
     logger.info('download_and_parse_m3u(), m3u_entries size: %d', len(m3u_entries))
@@ -415,12 +425,37 @@ def writeXml(channel_list, programme_list):
     logger.info('writeXml() copy to: %s, file size: %d', destination_file_path, os.path.getsize(file_path))
 
 
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def notify_finished(result):
+    # print('  notify_downloaded(', file_name, ')')
+    logger.info('notify_finished(%s)', result)
+    notifier_script = '/opt/nas-scripts/notifier.py'
+    if os.path.isfile(notifier_script):
+        try:
+            subprocess.run(['python3', notifier_script, 'Epg-Filter finished: ' + result, '-c' '#nas-monit'])
+        except Exception as e:
+            # print('    ERROR in notify_downloaded: ', e)
+            logger.error('ERROR in notify_finished', exc_info=True)
+    else:
+        # print('    ERROR notify script is not exists')
+        logger.error('ERROR notify script is not exists')
+
+
 if __name__ == '__main__':
     logger.info('main()')
-    start_time = time.time()
+    start_time = perf_counter()
 
-    all_m3u_entries = download_and_parse_m3u()
-    downloaded = download_epgs()
+    all_result = []
+
+    all_m3u_entries = download_and_parse_m3u(all_result)
+    downloaded = download_epgs(all_result)
     # downloaded = [cache_folder + '/epg-1.xml', cache_folder + '/epg-2.xml', cache_folder + '/epg-3.xml', cache_folder + '/epg-4.xml']
 
     channel_list = []
@@ -447,6 +482,7 @@ if __name__ == '__main__':
         if not found:
             logger.info('  %s', str(value))
             counter = counter + 1
+    all_result.append("Not present #" + str(counter))
     logger.info('Not preset, counter: ' + str(counter))
 
     # print('Empty:')
@@ -464,4 +500,10 @@ if __name__ == '__main__':
     #         print(programme)
 
     writeXml(channel_list, programme_list)
-    logger.info("main(), done: %s seconds", (time.time() - start_time))
+
+    all_time = (perf_counter() - start_time)
+    value = datetime.datetime.fromtimestamp(all_time)
+    all_result.append("Done in " + str(all_time))
+    notify_finished(all_result)
+    logger.info("main(), result: %s", all_result)
+
