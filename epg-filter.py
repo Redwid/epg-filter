@@ -439,8 +439,11 @@ def notify_finished(result):
     logger.info('notify_finished(%s)', result)
     notifier_script = '/opt/nas-scripts/notifier.py'
     if os.path.isfile(notifier_script):
+        line = "Epg-Filter finished:\n"
+        for item in result:
+            line += item + '\n'
         try:
-            subprocess.run(['python3', notifier_script, 'Epg-Filter finished: ' + result, '-c' '#nas-monit'])
+            subprocess.run(['python3', notifier_script, line, '-c' '#nas-monit'])
         except Exception as e:
             # print('    ERROR in notify_downloaded: ', e)
             logger.error('ERROR in notify_finished', exc_info=True)
