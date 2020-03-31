@@ -16,7 +16,7 @@ from model.model_items import M3uItem, ChannelItem, NameItem, ProgrammeItem
 from logger import getNasLogger
 
 # M3U url
-m3u_url = 'http://192.168.1.64:8000/torrent-telik'
+m3u_url = 'http://192.168.1.64:8008/torrent-telik'
 
 # EPG urls
 tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
