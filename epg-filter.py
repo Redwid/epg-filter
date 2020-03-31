@@ -27,7 +27,7 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
 # Path to store files
-destination_file_path = '/srv/dev-disk-by-label-media/epg/'
+destination_file_path = '/srv/dev-disk-by-label-media/data/epg/'
 # destination_file_path = './'
 
 # Cache folder
@@ -401,7 +401,7 @@ def compare(string1, string2):
     return False
 
 
-def writeXml(channel_list, programme_list):
+def writeXml(channel_list, programme_list, result):
     logger.info('writeXml()')
 
     tv = ET.Element("tv")
@@ -420,10 +420,12 @@ def writeXml(channel_list, programme_list):
         os.remove(file_path)
 
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
-    logger.info('writeXml(%s) done, file size: %d', file_path, os.path.getsize(file_path))
+    file_size = os.path.getsize(file_path)
+    logger.info('writeXml(%s) done, file size: %s', file_path, file_size)
 
     file_path = shutil.copy(file_path, destination_file_path + file_name)
-    logger.info('writeXml() copy to: %s, file size: %d', destination_file_path, os.path.getsize(file_path))
+    result.append('The epg.all size: ' + sizeof_fmt(file_size))
+    logger.info('writeXml() copy to: %s, file size: %s', destination_file_path, sizeof_fmt(file_size))
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -503,7 +505,7 @@ if __name__ == '__main__':
     #     else:
     #         print(programme)
 
-    writeXml(channel_list, programme_list)
+    writeXml(channel_list, programme_list, all_result)
 
     all_time = (perf_counter() - start_time)
     value = datetime.datetime.fromtimestamp(all_time)
