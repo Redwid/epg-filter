@@ -27,12 +27,11 @@ tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz',
 # tv_epg_urls = ['https://iptvx.one/epg/epg.xml.gz']
 
 # Path to store files
-destination_file_path = '/srv/dev-disk-by-label-media/data/epg/'
-# destination_file_path = './'
+destination_file_path_server = '/srv/dev-disk-by-label-media/data/epg/'
+destination_file_path_local = './'
 
 # Cache folder
-cache_folder = '/tmp/epg-cache'
-# cache_folder = 'epg-cache'
+cache_folder = '.cache'
 
 # Replacement map for channels
 # [list_to_check in xml][list_to_insert in m3u ]
@@ -140,6 +139,13 @@ replacement_map = [
 logger = getNasLogger('epg-filter')
 
 
+def get_destination_file_path():
+    if os.path.isfile(destination_file_path_server):
+        return destination_file_path_server
+
+    return destination_file_path_local
+
+
 def add_custom_entries(channel_item):
     list = channel_item.display_name_list
 
@@ -182,7 +188,8 @@ def get_value_from_list(value, list):
 def download_file(url, file_name, result):
     logger.info('download_file(%s, %s)', url, file_name)
 
-    file_name = cache_folder + '/' + file_name
+    destination_file_path_cache_folder = get_destination_file_path() + cache_folder
+    file_name = destination_file_path_cache_folder + '/' + file_name
     file_name_no_gz = file_name.replace('.gz', '')
 
     etag_file_name, file_extension = os.path.splitext(file_name)
@@ -197,8 +204,8 @@ def download_file(url, file_name, result):
             if data['last_modified'] != 'None':
                 headers['If-Modified-Since'] = data['last_modified']
 
-    if not os.path.exists(cache_folder):
-        os.makedirs(cache_folder)
+    if not os.path.exists(destination_file_path_cache_folder):
+        os.makedirs(destination_file_path_cache_folder)
 
     get_response = requests.get(url, headers=headers, stream=True, verify=False)
     if get_response.status_code == 304:
@@ -246,7 +253,7 @@ def download_m3u():
 def download_epgs(result):
     logger.info('download_epgs()')
     index = 1
-    downloaded = []
+    downloaded_list = []
     for url in tv_epg_urls:
         file_result = []
         file_result.append("epg #" + str(index))
@@ -261,14 +268,14 @@ def download_epgs(result):
                 gunzip(file_name)
                 file_name = xml_file_name
 
-            downloaded.append(file_name)
+            downloaded_list.append(file_name)
             result.append(file_result[0] + ", " + file_result[1] + ": " + sizeof_fmt(os.path.getsize(file_name)))
             logger.info('download_epg done, xml size: %s', sizeof_fmt(os.path.getsize(file_name)))
         except Exception as e:
             logger.error('ERROR in download_epg %s', e)
             print(e)
         index = index + 1
-    return downloaded
+    return downloaded_list
 
 
 def load_xmlt(m3u_entries, epg_file, channel_list, programme_list):
@@ -401,31 +408,33 @@ def compare(string1, string2):
     return False
 
 
-def writeXml(channel_list, programme_list, result):
-    logger.info('writeXml()')
+def write_xml(channel_list, programme_list, result):
+    logger.info('write_xml()')
 
     tv = ET.Element("tv")
 
-    for channel in channel_list:
-        channel.to_et_sub_element(tv)
+    for channel_item in channel_list:
+        channel_item.to_et_sub_element(tv)
+
+    destination_file_path_cache_folder = get_destination_file_path() + cache_folder
+    channels_tree = ET.ElementTree(tv)
+    channels_tree.write(destination_file_path_cache_folder + '/channels.xml', encoding='utf-8', xml_declaration=True)
+    logger.info('write_xml() saved channels')
 
     for programme in programme_list:
         programme.to_et_sub_element(tv)
 
     tree = ET.ElementTree(tv)
-    file_name = 'epg-all.xml'
-    file_path = cache_folder + '/epg-all.xml'
+
+    file_path = get_destination_file_path() + '/epg-all.xml'
 
     if os.path.exists(file_path):
         os.remove(file_path)
 
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
     file_size = os.path.getsize(file_path)
-    logger.info('writeXml(%s) done, file size: %s', file_path, file_size)
-
-    file_path = shutil.copy(file_path, destination_file_path + file_name)
+    logger.info('write_xml(%s) done, file size: %s', file_path, file_size)
     result.append('The epg.all size: ' + sizeof_fmt(file_size))
-    logger.info('writeXml() copy to: %s, file size: %s', destination_file_path, sizeof_fmt(file_size))
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -454,6 +463,21 @@ def notify_finished(result):
         logger.error('ERROR notify script is not exists')
 
 
+def load_cached_channels(m3u_entries):
+    logger.info('load_cached_channels()')
+    destination_file_path_cache_folder = get_destination_file_path() + cache_folder
+    tree = ET.parse(destination_file_path_cache_folder + '/channels.xml')
+    root = tree.getroot()
+
+    for item in root.findall('./channel'):
+        channel_item = ChannelItem(item)
+        channel_in_m3u = is_channel_present_in_m3u(channel_item, m3u_entries)
+        if not channel_in_m3u:
+            m3u_entries.append(M3uItem('group-name="" tvg-name="{}" tvg-logo="{}",{}'.format(channel_item.text, channel_item.icon, channel_item.get_display_name())))
+            logger.info('load_old_channels(), channel_in_m3u; %b', channel_in_m3u)
+    logger.info('load_old_channels()')
+
+
 if __name__ == '__main__':
     logger.info('main()')
     start_time = perf_counter()
@@ -461,8 +485,9 @@ if __name__ == '__main__':
     all_result = []
 
     all_m3u_entries = download_and_parse_m3u(all_result)
+    load_cached_channels(all_m3u_entries)
+
     downloaded = download_epgs(all_result)
-    # downloaded = [cache_folder + '/epg-1.xml', cache_folder + '/epg-2.xml', cache_folder + '/epg-3.xml', cache_folder + '/epg-4.xml']
 
     channel_list = []
     programme_list = []
@@ -505,7 +530,7 @@ if __name__ == '__main__':
     #     else:
     #         print(programme)
 
-    writeXml(channel_list, programme_list, all_result)
+    write_xml(channel_list, programme_list, all_result)
 
     all_time = (perf_counter() - start_time)
     value = datetime.datetime.fromtimestamp(all_time)

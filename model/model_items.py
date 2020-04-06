@@ -66,7 +66,10 @@ class ChannelItem:
 
             else:
                 if child.tag == 'icon':
-                    self.icon = child.attrib['src']
+                    if 'src' in child.attrib:
+                        self.icon = child.attrib['src']
+                    if 'text' in child.attrib:
+                        self.icon = child.attrib['text']
 
     def to_et_sub_element(self, root):
         item = ET.SubElement(root, 'channel', id=self.id)
@@ -75,6 +78,11 @@ class ChannelItem:
             add_sub_element('display-name', display_name, item)
         if self.icon is not None:
             ET.SubElement(item, 'icon').text = self.icon
+
+    def get_display_name(self):
+        for display_name in self.display_name_list:
+            return display_name
+        return ''
 
     def __str__(self):
         return 'ChannelItem[id:' + str(self.id) + ', text:' + str(self.text) + \
