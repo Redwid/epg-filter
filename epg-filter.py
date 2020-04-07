@@ -140,7 +140,8 @@ logger = getNasLogger('epg-filter')
 
 
 def get_destination_file_path():
-    if os.path.isfile(destination_file_path_server):
+    logger.info('get_destination_file_path()')
+    if os.path.isdir(destination_file_path_server):
         return destination_file_path_server
 
     return destination_file_path_local
