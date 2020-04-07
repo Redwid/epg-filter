@@ -204,6 +204,7 @@ def download_file(url, file_name, result):
             if data['last_modified'] != 'None':
                 headers['If-Modified-Since'] = data['last_modified']
 
+    logger.info('download_file(), destination_file_path_cache_folder: %s', destination_file_path_cache_folder)
     if not os.path.exists(destination_file_path_cache_folder):
         os.makedirs(destination_file_path_cache_folder)
 
