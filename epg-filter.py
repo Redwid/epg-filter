@@ -199,7 +199,7 @@ def download_file(url, file_name, result):
     if data is not None:
         file_name_no_gz = file_name.replace('.gz', '')
         if os.path.exists(file_name_no_gz):
-            if data['last_modified'] != 'None':
+            if 'etag' in data:
                 headers['If-None-Match'] = data['etag']
             if data['last_modified'] != 'None':
                 headers['If-Modified-Since'] = data['last_modified']
@@ -473,7 +473,8 @@ def load_cached_channels(m3u_entries):
         channel_item = ChannelItem(item)
         channel_in_m3u = is_channel_present_in_m3u(channel_item, m3u_entries)
         if not channel_in_m3u:
-            m3u_entries.append(M3uItem('group-name="" tvg-name="{}" tvg-logo="{}",{}'.format(channel_item.text, channel_item.icon, channel_item.get_display_name())))
+            display_name = channel_item.get_display_name()
+            m3u_entries.append(M3uItem('tvg-name="{}" tvg-id="{}",{}'.format(display_name, channel_item.id, display_name)))
             logger.info('load_old_channels(), channel_in_m3u; %b', channel_in_m3u)
     logger.info('load_old_channels()')
 
