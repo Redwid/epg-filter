@@ -421,7 +421,7 @@ def write_xml(channel_list, programme_list, result):
     destination_file_path_cache_folder = get_destination_file_path() + cache_folder
     channels_tree = ET.ElementTree(tv)
     channels_tree.write(destination_file_path_cache_folder + '/channels.xml', encoding='utf-8', xml_declaration=True)
-    logger.info('write_xml() saved channels')
+    logger.info('write_xml() saved channels, %d', len(channel_list))
 
     for programme in programme_list:
         programme.to_et_sub_element(tv)
@@ -436,6 +436,7 @@ def write_xml(channel_list, programme_list, result):
     tree.write(file_path, encoding='utf-8', xml_declaration=True)
     file_size = os.path.getsize(file_path)
     logger.info('write_xml(%s) done, file size: %s', file_path, file_size)
+    result.append('Saved channels: ' + str(len(channel_list)))
     result.append('The epg.all size: ' + sizeof_fmt(file_size))
 
 
