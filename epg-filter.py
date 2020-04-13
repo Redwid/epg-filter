@@ -222,7 +222,7 @@ def download_file(url, file_name, result):
             if chunk:
                 f.write(chunk)
     result.append('downloaded')
-    logger.info('download_file done: %s, , file size: %d', file_name, os.path.getsize(file_name))
+    logger.info('download_file done: %s, file size: %d', file_name, os.path.getsize(file_name))
     return file_name
 
 
@@ -466,23 +466,26 @@ def notify_finished(result):
         logger.error('ERROR notify script is not exists')
 
 
-def load_cached_channels(m3u_entries):
+def load_cached_channels(m3u_entries, result):
     logger.info('load_cached_channels()')
     destination_file_path_cache_folder = get_destination_file_path() + cache_folder
     try:
         tree = ET.parse(destination_file_path_cache_folder + '/channels.xml')
         root = tree.getroot()
 
+        counter  = 0
         for item in root.findall('./channel'):
             channel_item = ChannelItem(item)
             channel_in_m3u = is_channel_present_in_m3u(channel_item, m3u_entries)
             if not channel_in_m3u:
                 display_name = channel_item.get_display_name()
                 m3u_entries.append(M3uItem('tvg-name="{}" tvg-id="{}",{}'.format(display_name, channel_item.id, display_name)))
-                logger.info('load_old_channels(), channel_in_m3u; %b', channel_in_m3u)
+                logger.info('load_old_channels(), channel_in_m3u, display_name: %s', display_name)
+                counter = counter + 1
     except Exception as e:
         logger.error('ERROR in load_old_channels()', exc_info=True)
-    logger.info('load_old_channels()')
+    result.append("The old channels added: #" + str(counter))
+    logger.info('load_old_channels(), counter: %d', counter)
 
 
 if __name__ == '__main__':
@@ -492,7 +495,7 @@ if __name__ == '__main__':
     all_result = []
 
     all_m3u_entries = download_and_parse_m3u(all_result)
-    load_cached_channels(all_m3u_entries)
+    load_cached_channels(all_m3u_entries, all_result)
 
     downloaded = download_epgs(all_result)
 
