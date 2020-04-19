@@ -469,11 +469,12 @@ def notify_finished(result):
 def load_cached_channels(m3u_entries, result):
     logger.info('load_cached_channels()')
     destination_file_path_cache_folder = get_destination_file_path() + cache_folder
+
+    counter_cached  = 0
     try:
         tree = ET.parse(destination_file_path_cache_folder + '/channels.xml')
         root = tree.getroot()
 
-        counter_cached  = 0
         for item in root.findall('./channel'):
             channel_item = ChannelItem(item)
             channel_in_m3u = is_channel_present_in_m3u(channel_item, m3u_entries)
