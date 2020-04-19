@@ -473,19 +473,19 @@ def load_cached_channels(m3u_entries, result):
         tree = ET.parse(destination_file_path_cache_folder + '/channels.xml')
         root = tree.getroot()
 
-        counter  = 0
+        counter_cached  = 0
         for item in root.findall('./channel'):
             channel_item = ChannelItem(item)
             channel_in_m3u = is_channel_present_in_m3u(channel_item, m3u_entries)
             if not channel_in_m3u:
-                display_name = channel_item.get_display_name()
-                m3u_entries.append(M3uItem('tvg-name="{}" tvg-id="{}",{}'.format(display_name, channel_item.id, display_name)))
-                logger.info('load_old_channels(), channel_in_m3u, display_name: %s', display_name)
-                counter = counter + 1
+                name = channel_item.get_display_name()
+                m3u_entries.append(M3uItem('tvg-name="{}" tvg-id="{}",{}'.format(name, channel_item.id, name.text)))
+                logger.info('load_old_channels(), channel_in_m3u, name: %s', name)
+                counter_cached = counter_cached + 1
     except Exception as e:
         logger.error('ERROR in load_old_channels()', exc_info=True)
-    result.append("The old channels added: #" + str(counter))
-    logger.info('load_old_channels(), counter: %d', counter)
+    result.append("The old channels added: #" + str(counter_cached))
+    logger.info('load_old_channels(), counter_cached: %d', counter_cached)
 
 
 if __name__ == '__main__':
